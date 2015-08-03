@@ -68,6 +68,10 @@ class AlexaVerifier
         raise VerificationError, "Certificate URI port MUST be #{VALID_CERT_PORT}, was: #{cert_uri.port}"
       end
 
+      unless cert_uri.host == VALID_CERT_HOSTNAME
+        raise VerificationError, "Certificate URI hostname must be #{VALID_CERT_HOSTNAME}: #{cert_uri}"
+      end
+
       unless cert_uri.request_uri.start_with?(VALID_CERT_PATH_START)
         raise VerificationError, "Certificate URI path must start with #{VALID_CERT_PATH_START}: #{cert_uri}"
       end

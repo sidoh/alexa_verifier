@@ -10,6 +10,10 @@ describe AlexaVerifier do
       'https://s3.amazonaws.com/echo.api/echo-api-cert-2.pem'
     }
 
+    let(:invalid_cert_url) {
+      cert_url.gsub(AlexaVerifier::VALID_CERT_HOSTNAME, 'notamazon.com')
+    }
+
     let(:request) {
       '{"version":"1.0","session":{"new":true,"sessionId":"amzn1.echo-api.session.1ff7dcb7-2f6c-45e8-aace-55bc06a86b62","application":{"applicationId":"amzn1.echo-sdk-ams.app.a1692ae2-2e84-429a-b09c-6e08de725a60"},"user":{"userId":"amzn1.account.AHRI3B4LBO4N3PE62H32YWRVVLOQ"}},"request":{"type":"LaunchRequest","requestId":"amzn1.echo-api.request.35b5db84-66d0-4191-94c6-8d0d5fd0d41e","timestamp":"2015-08-02T20:50:21Z"}}'
     }
@@ -84,11 +88,24 @@ Kvi4Os7X1g8RvmurFPW9QaAiY4nxug9vKWNmLT+sjHLF+8fk1A/yO0+MKcc=
 
     before(:each) do
       stub_request(:get, cert_url).to_return(status: 200, body: cert)
+      stub_request(:get, invalid_cert_url).to_return(status: 200, body: cert)
     end
 
     describe '#verify!' do
       it 'returns true for a valid signature' do
         expect(verifier.verify!(cert_url, signature, request)).to be(true)
+      end
+
+      it 'complains when cert URL is not https' do
+        expect {
+          verifier.verify!(cert_url.gsub('https', 'http'), signature, request)
+        }.to raise_error(AlexaVerifier::VerificationError)
+      end
+
+      it 'complains when the cert is not hosted by Amazon' do
+        expect {
+          verifier.verify!(invalid_cert_url, signature, request)
+        }.to raise_error(AlexaVerifier::VerificationError)
       end
     end
   end
