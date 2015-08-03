@@ -10,8 +10,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Christopher Mullins"]
   spec.email         = ["chris@sidoh.org"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
+  spec.summary       = %q{Verifies requests sent to an Alexa skill are sent from Amazon}
   spec.homepage      = "http://www.github.com/sidoh/alexa_verifier"
   spec.license       = "MIT"
 
