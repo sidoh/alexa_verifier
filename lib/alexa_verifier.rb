@@ -1,4 +1,3 @@
-require "alexa_verifier/version"
-
 class AlexaVerifier
+  VERSION = '0.1.0'
 end
