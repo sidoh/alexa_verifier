@@ -1,6 +1,8 @@
 require 'net/http'
 require 'openssl'
 require 'base64'
+require 'time'
+require 'json'
 
 class AlexaVerifier
   VERSION = '0.1.0'
@@ -11,22 +13,41 @@ class AlexaVerifier
   VALID_CERT_PATH_START = '/echo.api/'
   VALID_CERT_PORT = 443
 
-  def initialize
+  def initialize(verify_signatures = true, verify_timestamps = true, timestamp_tolerance = 150)
     @cert_cache = {}
+    @verify_signatures = verify_signatures
+    @verify_timestamps = verify_timestamps
+    @timestamp_tolerance = timestamp_tolerance
   end
 
   def verify!(cert_url, signature, request)
-    x509_cert = cert(cert_url)
-    public_key = x509_cert.public_key
+    verify_timestamp!(request) if @verify_timestamps
 
-    if public_key.verify(hash_type, Base64.decode64(signature), request)
-      true
-    else
-      raise VerificationError.new, 'Signature does not match!'
+    if @verify_signatures
+      x509_cert = cert(cert_url)
+      public_key = x509_cert.public_key
+
+      unless public_key.verify(hash_type, Base64.decode64(signature), request)
+        raise VerificationError.new, 'Signature does not match!'
+      end
     end
+
+    true
   end
 
   private
+
+    def verify_timestamp!(request)
+      request_json = JSON.parse(request)
+
+      if request_json['request'].nil? or request_json['request']['timestamp'].nil?
+        raise VerificationError.new, 'Timestamp field not present in request'
+      end
+
+      unless Time.parse(request_json['request']['timestamp']) >= (Time.now - @timestamp_tolerance)
+        raise VerificationError.new, "Request is from more than #{@timestamp_tolerance} seconds ago"
+      end
+    end
 
     def hash_type
       OpenSSL::Digest::SHA1.new
@@ -55,7 +76,7 @@ class AlexaVerifier
       if response.code == '200'
         response.body
       else
-        raise RuntimeError.new, "Failed to download certificate. Response code: #{response.code}, error: #{response.body}"
+        raise VerificationError, "Failed to download certificate at: #{uri}. Response code: #{response.code}, error: #{response.body}"
       end
     end
 

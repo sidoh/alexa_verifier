@@ -113,6 +113,19 @@ Kvi4Os7X1g8RvmurFPW9QaAiY4nxug9vKWNmLT+sjHLF+8fk1A/yO0+MKcc=
           verifier.verify!(cert_url.gsub('/echo.api/', '/not.echo.api/'), signature, request)
         }.to raise_error(AlexaVerifier::VerificationError)
       end
+
+      it 'fails validation when signature does not match' do
+        expect {
+          verifier.verify!(cert_url, signature, '{}')
+        }.to raise_error(AlexaVerifier::VerificationError)
+      end
+
+      it 'fails validation when cert cannot be downloaded' do
+        stub_request(:get, cert_url).to_return(status: 404, body: 'Not found')
+        expect {
+          verifier.verify!(cert_url, signature, request)
+        }.to raise_error(AlexaVerifier::VerificationError)
+      end
     end
   end
 end
