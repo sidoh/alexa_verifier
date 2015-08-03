@@ -107,6 +107,12 @@ Kvi4Os7X1g8RvmurFPW9QaAiY4nxug9vKWNmLT+sjHLF+8fk1A/yO0+MKcc=
           verifier.verify!(invalid_cert_url, signature, request)
         }.to raise_error(AlexaVerifier::VerificationError)
       end
+
+      it 'complains when the path is not valid' do
+        expect {
+          verifier.verify!(cert_url.gsub('/echo.api/', '/not.echo.api/'), signature, request)
+        }.to raise_error(AlexaVerifier::VerificationError)
+      end
     end
   end
 end
