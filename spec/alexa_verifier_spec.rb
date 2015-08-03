@@ -84,7 +84,11 @@ Kvi4Os7X1g8RvmurFPW9QaAiY4nxug9vKWNmLT+sjHLF+8fk1A/yO0+MKcc=
 -----END CERTIFICATE-----
     CERT
 
-    let(:verifier) { AlexaVerifier.new }
+    let(:verifier) {
+      AlexaVerifier.build do |b|
+        b.verify_timestamps = false
+      end
+    }
 
     before(:each) do
       stub_request(:get, cert_url).to_return(status: 200, body: cert)
@@ -125,6 +129,25 @@ Kvi4Os7X1g8RvmurFPW9QaAiY4nxug9vKWNmLT+sjHLF+8fk1A/yO0+MKcc=
         expect {
           verifier.verify!(cert_url, signature, request)
         }.to raise_error(AlexaVerifier::VerificationError)
+      end
+
+      it 'fails verification for timestamps when enabled' do
+        verifier = AlexaVerifier.build do |b|
+          b.verify_timestamps = true
+        end
+
+        expect {
+          verifier.verify!(cert_url, signature, request)
+        }.to raise_error(AlexaVerifier::VerificationError)
+      end
+
+      it 'passes validation when both signature/timestamp validations are disabled' do
+        verifier = AlexaVerifier.build do |b|
+          b.verify_timestamps = false
+          b.verify_signatures = false
+        end
+
+        expect(verifier.verify!(invalid_cert_url, 'invalid_signature', 'invalid_request')).to be(true)
       end
     end
   end

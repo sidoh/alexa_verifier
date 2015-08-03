@@ -9,11 +9,33 @@ class AlexaVerifier
 
   class VerificationError < StandardError; end
 
+  DEFAULT_TIMESTAMP_TOLERANCE = 150
+
   VALID_CERT_HOSTNAME = 's3.amazonaws.com'
   VALID_CERT_PATH_START = '/echo.api/'
   VALID_CERT_PORT = 443
 
-  def initialize(verify_signatures = true, verify_timestamps = true, timestamp_tolerance = 150)
+  class Builder
+    attr_accessor :verify_signatures, :verify_timestamps, :timestamp_tolerance
+
+    def initialize
+      @verify_signatures = true
+      @verify_timestamps = true
+      @timestamp_tolerance = DEFAULT_TIMESTAMP_TOLERANCE
+    end
+
+    def create
+      AlexaVerifier.new(verify_signatures, verify_timestamps, timestamp_tolerance)
+    end
+  end
+
+  def self.build(&block)
+    builder = Builder.new
+    block.call(builder)
+    builder.create
+  end
+
+  def initialize(verify_signatures = true, verify_timestamps = true, timestamp_tolerance = DEFAULT_TIMESTAMP_TOLERANCE)
     @cert_cache = {}
     @verify_signatures = verify_signatures
     @verify_timestamps = verify_timestamps
