@@ -22,7 +22,7 @@ Amazon requires publicly registered skills validate requests sent to it. This in
 1. Verifying that the timestamp in the request is from not too long ago (Amazon recommends a max of 150 seconds).
 2. Verifying that the signature sent is valid against the request.
 
-This gem takes care of both of these. You can read more about the technical specifications [here](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/developing-an-alexa-skill-as-a-web-service#Verifying that the Request was Sent by Alexa).
+This gem takes care of both of these. You can read more about the technical specifications [here](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/developing-an-alexa-skill-as-a-web-service#Verifying) that the Request was Sent by Alexa).
 
 ## Example usage
 
@@ -54,4 +54,4 @@ verifier.verify!(
 
 ## Credits
 
-This code was adapted from signature verification code found in the [AWS SNS module](https://github.com/aws/aws-sdk-ruby/blob/master/aws-sdk-resources/lib/aws-sdk-resources/services/sns/message_verifier.rb).
+This code was adapted from signature verification code found in the [AWS SNS module](https://github.com/aws/aws-sdk-ruby/blob/v2.10.64/aws-sdk-resources/lib/aws-sdk-resources/services/sns/message_verifier.rb).
