@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Matt Rayner']
   spec.email         = ['m@rayner.io']
 
-  spec.summary       = 'Write a short summary, because RubyGems requires one.'
-  spec.description   = 'Write a longer description or delete this line.'
+  spec.summary       = 'Verify HTTP requests sent to an Alexa skill are sent from Amazon.'
+  spec.description   = 'This gem is designed to work with Sinatra applications that serve as back-ends for Amazon Alexa skills.'
   spec.homepage      = 'https://github.com/mattrayner/alexa_request_verifier'
   spec.license       = 'MIT'
 
