@@ -80,7 +80,7 @@ module AlexaRequestVerifier
         def test_path(uri)
           path = File.absolute_path(uri.path)
 
-          return if path.match(PATH_REGEX)
+          return if path.match(PATH_REGEX) # rubocop:disable Performance/RegexpMatch # Disabled for backwards compatibility below 2.4
 
           raise AlexaRequestVerifier::InvalidCertificateURIError.new(
             "URI path must start with '/echo.api/'",
