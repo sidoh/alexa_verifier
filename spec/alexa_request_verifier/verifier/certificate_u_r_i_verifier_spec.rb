@@ -3,13 +3,13 @@ require_relative '../../spec_helper'
 RSpec.describe AlexaRequestVerifier::Verifier::CertificateURIVerifier do
   describe '#valid!' do
     context 'with a valid URI' do
-      it 'returns nil' do
-        expect(subject.valid!('https://s3.amazonaws.com/echo.api/echo-api-cert.pem')).to eq(true)
+      it 'returns true' do
+        expect(subject.valid!('https://s3.amazonaws.com/echo.api/echo-api-cert-5.pem')).to eq(true)
       end
 
       context 'correctly normalises paths' do
-        it 'returns nil' do
-          expect(subject.valid!('https://s3.amazonaws.com/echo.api/../echo.api/echo-api-cert.pem')).to eq(true)
+        it 'returns true' do
+          expect(subject.valid!('https://s3.amazonaws.com/echo.api/../echo.api/echo-api-cert-5.pem')).to eq(true)
         end
       end
     end
@@ -56,7 +56,7 @@ RSpec.describe AlexaRequestVerifier::Verifier::CertificateURIVerifier do
   describe '#valid?' do
     context 'with a valid URI' do
       it 'returns true' do
-        expect(subject.valid?('https://s3.amazonaws.com/echo.api/echo-api-cert.pem')).to eq(true)
+        expect(subject.valid?('https://s3.amazonaws.com/echo.api/echo-api-cert-5.pem')).to eq(true)
       end
 
       context 'correctly normalises paths' do

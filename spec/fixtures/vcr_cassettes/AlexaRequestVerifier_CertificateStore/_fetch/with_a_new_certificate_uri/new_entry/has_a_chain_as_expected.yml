@@ -21,11 +21,11 @@ http_interactions:
       message: OK
     headers:
       X-Amz-Id-2:
-      - hSVzMfuYMFecprHvkdzWLUozwGbClU1lCHtBkbXlKDM+W12T8q4mgBg2OHGC6VBTvZ9JlD0Ngkg=
+      - RZGNEVq9s6DUtIGKJOvgy4z/LqjQbqyrlM0ffM6zh/baqXhmHG+wVjKU0jk+LxTOLTXrxJ0o+tU=
       X-Amz-Request-Id:
-      - 682CE729746A9D25
+      - 9936F1261DA4F927
       Date:
-      - Tue, 21 Nov 2017 23:14:36 GMT
+      - Tue, 21 Nov 2017 23:13:41 GMT
       Last-Modified:
       - Thu, 26 Oct 2017 21:36:16 GMT
       Etag:
@@ -106,5 +106,5 @@ http_interactions:
         Kvi4Os7X1g8RvmurFPW9QaAiY4nxug9vKWNmLT+sjHLF+8fk1A/yO0+MKcc=
         -----END CERTIFICATE-----
     http_version: 
-  recorded_at: Mon, 20 Nov 2017 08:45:05 GMT
+  recorded_at: Sun, 19 Nov 2017 00:13:37 GMT
 recorded_with: VCR 3.0.3

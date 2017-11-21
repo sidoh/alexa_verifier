@@ -2,7 +2,7 @@
 
 [AlexaRequestVerifier][alexa_request_verifier] is a gem created to verify that requests received within a Sinatra application originate from Amazon's Alexa API.
 
-[![Build Status][shield-travis]][info-travis] [![License][shield-license]][info-license]
+[![Build Status][shield-travis]][info-travis] [![Code Coverage][shield-coveralls]][info-coveralls] [![License][shield-license]][info-license]
 
 ## Requirements
 [AlexaRequestVerifier][alexa_request_verifier] requires the following:
@@ -90,6 +90,9 @@ Everyone interacting in the AlexaRequestVerifier project’s codebases, issue tr
 
 [info-travis]:   https://travis-ci.org/mattrayner/alexa_request_verifier
 [shield-travis]: https://img.shields.io/travis/mattrayner/alexa_request_verifier.svg
+
+[info-coveralls]:   https://coveralls.io/github/mattrayner/alexa_request_verifier
+[shield-coveralls]: https://img.shields.io/coveralls/github/mattrayner/alexa_request_verifier.svg
 
 [info-license]:   https://github.com/mattrayner/alexa_request_verifier/blob/master/LICENSE
 [shield-license]: https://img.shields.io/badge/license-MIT-blue.svg

@@ -3,26 +3,28 @@ module AlexaRequestVerifier
   # @since 0.1
   module CertificateStore
     CERTIFICATE_CACHE_TIME = 1800 # 30 minutes
+    CERTIFICATE_SEPARATOR = '-----BEGIN CERTIFICATE-----'.freeze
 
     class << self
-      # Given a certificate uri, either download the certificate, or
-      # load it from our certificate store.
+      # Given a certificate uri, either download the certificate and chain, or
+      # load them from our certificate store.
       #
       # @param [String] uri the uri of our certificate
-      # @return [OpenSSL::X509::Certificate] our certificate file
+      # @return [OpenSSL::X509::Certificate, Array<OpenSSL::X509::Certificate>] our certificate file and chain
       def fetch(uri)
         store
 
         if cache_valid?(@store[uri])
           certificate = @store[uri][:certificate]
+          chain = @store[uri][:chain]
         else
-          certificate_data = download_certificate(uri)
-          certificate = OpenSSL::X509::Certificate.new(certificate_data)
+          chain = generate_certificate_chain_from_data(download_certificate(uri))
+          certificate = chain.delete_at(0)
 
-          @store[uri] = { timestamp: Time.now, certificate: certificate }
+          @store[uri] = { timestamp: Time.now, certificate: certificate, chain: chain }
         end
 
-        certificate
+        [certificate, chain]
       end
 
       # Given a certificate uri, remove the certificate from our store.
@@ -57,7 +59,7 @@ module AlexaRequestVerifier
 
       # Given a certificate uri, download it and return the certificate data
       #
-      # @param [String] uri the uri of our certificate
+      # @param [String] uri the uri of our certificates
       # @return [String] certificate data
       def download_certificate(uri)
         certificate_uri = URI.parse(uri)
@@ -75,6 +77,21 @@ module AlexaRequestVerifier
         end
 
         certificate_data
+      end
+
+      # Given a string of certificate data, which may contain one or more certificates,
+      # convert it into an array of certificate object representing the full chain.
+      #
+      # @param [String] certificate_data the certificate data we should build our chain from
+      # @return [Array<OpenSSL::X509::Certificate>] an array of certificate objects representing our chain
+      def generate_certificate_chain_from_data(certificate_data)
+        split_data = certificate_data.split(CERTIFICATE_SEPARATOR)
+
+        # Remove any empty string artifacts
+        split_data.reject! { |data| data.strip.empty? }
+
+        # Convert our array of split out certificate data strings, into an array of certificate objects
+        split_data.map { |data| OpenSSL::X509::Certificate.new(CERTIFICATE_SEPARATOR + data) }
       end
     end
   end

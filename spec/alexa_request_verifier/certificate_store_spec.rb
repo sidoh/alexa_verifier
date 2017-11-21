@@ -6,7 +6,7 @@ RSpec.describe AlexaRequestVerifier::CertificateStore, vcr: true do
   end
 
   describe '#fetch' do
-    let(:uri) { 'https://s3.amazonaws.com/echo.api/echo-api-cert.pem' }
+    let(:uri) { 'https://s3.amazonaws.com/echo.api/echo-api-cert-5.pem' }
 
     before :each do
       Timecop.freeze(Time.local(2017,11,19,00,13,37))
@@ -27,7 +27,14 @@ RSpec.describe AlexaRequestVerifier::CertificateStore, vcr: true do
       end
 
       it 'returns a certificate file' do
-        expect(subject.fetch(uri)).to be_a(OpenSSL::X509::Certificate)
+        cert, _ = subject.fetch(uri)
+        expect(cert).to be_a(OpenSSL::X509::Certificate)
+      end
+
+      it 'returns a certificate chain' do
+        _, chain = subject.fetch(uri)
+        expect(chain).to be_a(Array)
+        expect(chain.length).to eq(1)
       end
 
       context 'new entry' do
@@ -42,6 +49,11 @@ RSpec.describe AlexaRequestVerifier::CertificateStore, vcr: true do
         it 'has a certificate as expected' do
           expect(subject.store[uri][:certificate]).to be_a(OpenSSL::X509::Certificate)
         end
+
+        it 'has a chain as expected' do
+          expect(subject.store[uri][:chain]).to be_a(Array)
+          expect(subject.store[uri][:chain].first).to be_a(OpenSSL::X509::Certificate)
+        end
       end
 
       context 'when an error occurs whilst downloading certificate' do
@@ -53,7 +65,7 @@ RSpec.describe AlexaRequestVerifier::CertificateStore, vcr: true do
         it 'raises AlexaRequestVerifier::InvalidCertificateError' do
           expect{
             subject.fetch(uri)
-          }.to raise_error(AlexaRequestVerifier::InvalidCertificateError, 'Unable to download certificate from https://s3.amazonaws.com/echo.api/echo-api-cert.pem - Got 500 status code')
+          }.to raise_error(AlexaRequestVerifier::InvalidCertificateError, 'Unable to download certificate from https://s3.amazonaws.com/echo.api/echo-api-cert-5.pem - Got 500 status code')
         end
       end
     end
@@ -78,7 +90,8 @@ RSpec.describe AlexaRequestVerifier::CertificateStore, vcr: true do
         end
 
         it 'returns a certificate file' do
-          expect(subject.fetch(uri)).to be_a(OpenSSL::X509::Certificate)
+          cert, _ = subject.fetch(uri)
+          expect(cert).to be_a(OpenSSL::X509::Certificate)
         end
       end
 
@@ -101,7 +114,9 @@ RSpec.describe AlexaRequestVerifier::CertificateStore, vcr: true do
         end
 
         it 'returns a certificate file' do
-          expect(subject.fetch(uri)).to be_a(OpenSSL::X509::Certificate)
+          cert, _ = subject.fetch(uri)
+
+          expect(cert).to be_a(OpenSSL::X509::Certificate)
         end
       end
     end
