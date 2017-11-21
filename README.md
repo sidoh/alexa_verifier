@@ -6,6 +6,27 @@ This gem is framework agnostic and should work with any Rack based application i
 
 [![Build Status][shield-travis]][info-travis] [![Code Coverage][shield-coveralls]][info-coveralls] [![License][shield-license]][info-license]
 
+## Contents
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Methods](#methods)
+  - [Disabling checks](#disabling-checks)
+    - [Example](#example)
+  - [Handling errors](#handling-errors)
+- [Getting Started with Development](#getting-started-with-development)
+  - [Running the tests](#running-the-tests)
+- [Contributing](#contributing)
+- [License](#license)
+- [Code of Conduct](#code-of-conduct)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+
 ## Requirements
 [AlexaRequestVerifier][alexa_request_verifier] requires the following:
 * [Ruby][ruby] - version 2.0 or greater
@@ -58,6 +79,33 @@ Method | Parameter type | Returns
 ---|---|---
 `AlexaRequestVerifier.valid!(request)` | Rack-based request object | `true` on successful verification. Raises an error if unsuccessful.
 `AlexaRequestVerifier.valid?(request)` | Rack-based request object | `true` on successful verificatipn. `false` if unsuccessful.
+
+You are also able to configure [AlexaRequestVerifier][alexa_request_verifier] to disable some checks. This is detailed in the section below.
+
+
+### Disabling checks
+If you'd like to disable one (or more) of the checks performed by [AlexaRequestVerifier][alexa_request_verifier], you can do so by passing a #configure block. Each of the configuration attributes are Boolean values and are detailed below.
+
+Option | Default | Description
+---|---|---
+`enabled` | `true` | Enables or disables AlexaRequestVerifier checks. This setting overrides all others i.e. setting `config.enabled = false` disables all checks even if you set others to true.
+`verify_uri` | `true` | Enables or disables checks on the certificate URI. Set to `false` to allow serving of certificates from non-amazon approved domains.
+`verify_timeliness` | `true` | Enables or disables timeliness checks. Set to `false` to allow requests generated in the past to be executed. Good for serving test requests.
+`verify_certificate` | `true` | Enables or disabled checks on whether the certificate is in date, or contains the SAN address we expect.
+`verify_signature` | `true` | Enables or disables checks to see if a request was actually signed by a certificate.
+
+#### Example
+The blow is an example of a 'complete' configure block.
+
+```ruby
+AlexaRequestVerifier.configure do |config|
+  config.enabled            = false # Disables all checks, even though we enable them individually below
+  config.verify_uri         = true
+  config.verify_timeliness  = true
+  config.verify_certificate = true
+  config.verify_signature   = true
+end
+```
 
 
 ### Handling errors

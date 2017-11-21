@@ -62,4 +62,121 @@ RSpec.describe AlexaRequestVerifier, vcr: true do
       end
     end
   end
+
+  describe '#configure' do
+    after :each do
+      subject.instance_variable_set(:@configuration, AlexaRequestVerifier::Configuration.new)
+    end
+
+    context 'when passing a block' do
+      context 'that disables all settings' do
+        before :each do
+          subject.configure do |config|
+            config.enabled = false
+          end
+        end
+
+        it 'does not run any validation' do
+          expect(subject.valid!(invalid_request)).to eq(true)
+        end
+      end
+
+      context 'that disables certificate uri checking' do
+        before :each do
+          # Set our configuration
+          subject.configure do |config|
+            config.verify_uri = false
+          end
+
+          # Mock our certificate request
+          file = File.open('./spec/fixtures/echo-api-cert.pem', 'rb')
+          certificate_data = file.read
+          file.close
+          stub_request(:any, /bad.example/).to_return(body: certificate_data)
+
+          # Set up our modified request
+          modified_request = valid_request
+          modified_request.env['HTTP_SIGNATURECERTCHAINURL'] = 'http://bad.example'
+
+          @result = subject.valid!(modified_request)
+        end
+
+        it 'downloads the certificate from the invalid address' do
+          expect(a_request(:get, 'https://bad.example:80')).to have_been_made.times(1)
+        end
+
+        it 'adds our \'invalid\' certificate to our certificate store' do
+          expect(AlexaRequestVerifier::CertificateStore.store['http://bad.example']).not_to be_nil
+        end
+
+        it 'returns true when you call #valid! with an invalid certificate address' do
+          expect(@result).to eq(true)
+        end
+      end
+
+      context 'that disables timeliness checking' do
+        before :each do
+          # Set our configuration
+          subject.configure do |config|
+            config.verify_timeliness = false
+          end
+
+          # Move us into the 'future' so our request is old
+          Timecop.freeze(Time.local(2017,11,21))
+        end
+
+        it 'returns true when you call #valid! with an untimely request' do
+          expect(subject.valid!(valid_request)).to eq(true)
+        end
+      end
+
+      context 'that disables certificate checking' do
+        before :each do
+          # Set our configuration
+          subject.configure do |config|
+            config.verify_certificate = false
+          end
+
+          # Fetch our certificate and load it into our certificate store
+          AlexaRequestVerifier::CertificateStore.fetch('https://s3.amazonaws.com/echo.api/echo-api-cert-5.pem')
+
+          # Modify the certificate to make it out of date and remove the SANs
+          modified_certificate, _ = AlexaRequestVerifier::CertificateStore.fetch('https://s3.amazonaws.com/echo.api/echo-api-cert-5.pem')
+          modified_certificate.not_before = Time.local(1990,01,01)
+          modified_certificate.not_after = Time.local(1991,01,01)
+          modified_certificate.extensions = []
+
+          AlexaRequestVerifier::CertificateStore.store['https://s3.amazonaws.com/echo.api/echo-api-cert-5.pem'][:certificate] = modified_certificate
+        end
+
+        after :each do
+          # Reset our certificate store
+          AlexaRequestVerifier::CertificateStore.instance_variable_set(:@store, nil)
+        end
+
+        it 'returns true when you call #valid! with an invalid certificate in our store' do
+          expect(subject.valid!(valid_request)).to eq(true)
+        end
+      end
+
+      context 'that disables signature checking' do
+        before :each do
+          # Set our configuration
+          subject.configure do |config|
+            config.verify_signature = false
+          end
+
+          # Set up our modified request
+          modified_request = valid_request
+          modified_request.env['HTTP_SIGNATURE'] = 'invalid'
+
+          @result = subject.valid!(modified_request)
+        end
+
+        it 'returns true when you call #valid! with an invalid signature' do
+          expect(@result).to eq(true)
+        end
+      end
+    end
+  end
 end

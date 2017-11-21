@@ -32,7 +32,11 @@ RSpec.describe AlexaRequestVerifier::Verifier::CertificateURIVerifier do
       end
 
       context 'that is not on port 443' do
-        it 'raises the expected error'
+        it 'raises the expected error' do
+          expect {
+            subject.valid!('https://example.com:80')
+          }.to raise_error(AlexaRequestVerifier::InvalidCertificateURIError, "Invalid certificate URI : URI port must be '443'. Got: '80'.")
+        end
       end
 
       context 'that is not from the expected host' do
@@ -74,7 +78,9 @@ RSpec.describe AlexaRequestVerifier::Verifier::CertificateURIVerifier do
       end
 
       context 'that is not on port 443' do
-        it 'returns false'
+        it 'returns false' do
+          expect(subject.valid?('https://example.com:80')).to eq(false)
+        end
       end
 
       context 'that is not from the expected host' do

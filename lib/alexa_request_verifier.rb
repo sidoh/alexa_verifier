@@ -1,4 +1,5 @@
 require 'alexa_request_verifier/certificate_store'
+require 'alexa_request_verifier/configuration'
 require 'alexa_request_verifier/verifier'
 require 'alexa_request_verifier/version'
 
@@ -14,6 +15,8 @@ module AlexaRequestVerifier
   REQUEST_THRESHOLD = 150 # Requests must be received within X seconds
 
   class << self
+    attr_reader :configuration
+
     # Validate a request object from Rack.
     # Raise an error if it is not valid.
     #
@@ -26,12 +29,12 @@ module AlexaRequestVerifier
     def valid!(request)
       signature_certificate_url = request.env['HTTP_SIGNATURECERTCHAINURL']
 
-      AlexaRequestVerifier::Verifier::CertificateURIVerifier.valid!(signature_certificate_url)
+      AlexaRequestVerifier::Verifier::CertificateURIVerifier.valid!(signature_certificate_url) if @configuration.verify_uri?
 
       raw_body = request.body.read
       request.body && request.body.rewind # call the rewind method if it exists (handles Sinatra specifically)
 
-      check_that_request_is_timely(raw_body)
+      check_that_request_is_timely(raw_body) if @configuration.verify_timeliness?
 
       check_that_request_is_valid(signature_certificate_url, request, raw_body)
 
@@ -55,6 +58,19 @@ module AlexaRequestVerifier
       true
     end
 
+    # Used to configure AlexaRequestVerifier.
+    #
+    # @example
+    #    AlexaRequestVerifier.configure do |c|
+    #      c.some_config_option = true
+    #    end
+    #
+    # @yield the configuration block
+    # @yieldparam config [AlexaRequestVerifier::Configuration] the configuration object
+    def configure
+      yield @configuration
+    end
+
     private
 
     # Prevent replays of requests by checking that they are timely.
@@ -75,12 +91,12 @@ module AlexaRequestVerifier
     # @param [Rack::Request::Env] request the request object
     # @param [String] raw_body the raw body of our https request
     def check_that_request_is_valid(signature_certificate_url, request, raw_body)
-      certificate, chain = AlexaRequestVerifier::CertificateStore.fetch(signature_certificate_url)
+      certificate, chain = AlexaRequestVerifier::CertificateStore.fetch(signature_certificate_url) if @configuration.verify_certificate? || @configuration.verify_signature?
 
       begin
-        AlexaRequestVerifier::Verifier::CertificateVerifier.valid!(certificate, chain)
+        AlexaRequestVerifier::Verifier::CertificateVerifier.valid!(certificate, chain) if @configuration.verify_certificate?
 
-        check_that_request_was_signed(certificate.public_key, request, raw_body)
+        check_that_request_was_signed(certificate.public_key, request, raw_body) if @configuration.verify_signature?
       rescue AlexaRequestVerifier::InvalidCertificateError, AlexaRequestVerifier::InvalidRequestError => error
         # We don't want to cache a certificate that fails our checks as it could lock us out of valid requests for the cache length
         AlexaRequestVerifier::CertificateStore.delete(signature_certificate_url)
@@ -104,5 +120,11 @@ module AlexaRequestVerifier
 
       raise AlexaRequestVerifier::InvalidRequestError, 'Signature does not match certificate provided' unless signed_by_certificate
     end
+
+    def initialize_configuration
+      @configuration = AlexaRequestVerifier::Configuration.new
+    end
   end
+
+  initialize_configuration
 end
