@@ -20,6 +20,11 @@ RSpec.configure do |config|
 
   # Load support files
   Dir['./spec/support/**/*.rb'].each {|f| require f}
+
+  # Clean up any potential certificate caching
+  config.after(:each) do
+    AlexaRequestVerifier::CertificateStore.instance_variable_set(:@store, nil)
+  end
 end
 
 VCR.configure do |config|

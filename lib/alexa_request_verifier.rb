@@ -75,10 +75,10 @@ module AlexaRequestVerifier
     # @param [Sinatra::Request] request the request object
     # @param [String] raw_body the raw body of our https request
     def check_that_request_is_valid(signature_certificate_url, request, raw_body)
-      certificate = AlexaRequestVerifier::CertificateStore.fetch(signature_certificate_url)
+      certificate, chain = AlexaRequestVerifier::CertificateStore.fetch(signature_certificate_url)
 
       begin
-        AlexaRequestVerifier::Verifier::CertificateVerifier.valid!(certificate)
+        AlexaRequestVerifier::Verifier::CertificateVerifier.valid!(certificate, chain)
 
         check_that_request_was_signed(certificate.public_key, request, raw_body)
       rescue AlexaRequestVerifier::InvalidCertificateError, AlexaRequestVerifier::InvalidRequestError => error
