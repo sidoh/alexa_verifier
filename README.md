@@ -1,6 +1,8 @@
 # Alexa Request Verifier
 
-[AlexaRequestVerifier][alexa_request_verifier] is a gem created to verify that requests received within a Sinatra application originate from Amazon's Alexa API.
+[AlexaRequestVerifier][alexa_request_verifier] is a gem created to verify that requests received within a [Rack][rack]-based application originate from Amazon's Alexa API.
+
+This gem is framework agnostic and should work with any Rack based application including both [Rails][rails] and [Sinatra][sinatra].
 
 [![Build Status][shield-travis]][info-travis] [![Code Coverage][shield-coveralls]][info-coveralls] [![License][shield-license]][info-license]
 
@@ -19,8 +21,9 @@ gem 'alexa_request_verifier'
 
 
 ## Usage
-This gem's main function is taking an [Sinatra][sinatra] request and verifying that it was sent by Amazon.
+This gem's main function is taking an [Rack][rack] request and verifying that it was sent by Amazon.
 
+### Sinatra
 ```ruby
 # within server.rb (or equivalent)
 
@@ -29,13 +32,32 @@ post '/' do
 end
 ```
 
+
+### Rails
+```ruby
+# config/routes.rb
+
+post '/', to: 'alexa#index'
+```
+
+```ruby
+# app/controllers/alexa_controller.rb
+class AlexaController < ApplicationController
+  skip_before_action :verify_authenticity_token, only: :index
+
+  def index
+    AlexaRequestVerifier.valid!(request)
+  end
+end
+```
+
 ### Methods
 [AlexaRequestVerifier][alexa_request_verifier] has two main entry points, detailsed below:
 
 Method | Parameter type | Returns
 ---|---|---
-`AlexaRequestVerifier.valid!(request)` | `Sinatra::Request` | `true` on successful verification. Raises an error if unsuccessful.
-`AlexaRequestVerifier.valid?(request)` | `Sinatra::Request` | `true` on successful verificatipn. `false` if unsuccessful.
+`AlexaRequestVerifier.valid!(request)` | Rack-based request object | `true` on successful verification. Raises an error if unsuccessful.
+`AlexaRequestVerifier.valid?(request)` | Rack-based request object | `true` on successful verificatipn. `false` if unsuccessful.
 
 
 ### Handling errors
@@ -85,6 +107,9 @@ Everyone interacting in the AlexaRequestVerifier project’s codebases, issue tr
 
 [alexa_request_verifier]: https://github.com/mattrayner/alexa_request_verifier
 [ruby]:                   http://ruby-lang.org
+[rack]:                   https://rack.github.io
+[rails]:                  http://rubyonrails.org
+[sinatra]:                http://sinatrarb.com
 [rspec]:                  http://rspec.info
 [code_of_conduct]:        https://github.com/mattrayner/alexa_request_verifier/blob/master/CODE_OF_CONDUCT.md
 
