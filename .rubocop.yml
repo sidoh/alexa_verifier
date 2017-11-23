@@ -1,0 +1,13 @@
+AllCops:
+  Exclude:
+    - spec/**/*.rb
+
+Metrics/LineLength:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# We want to maintain compatibility with Ruby 2.0+, safe nav is a 2.3 feature
+Style/SafeNavigation:
+  Enabled: false
