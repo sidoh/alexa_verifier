@@ -1,4 +1,5 @@
 require 'alexa_request_verifier/certificate_store'
+require 'alexa_request_verifier/configuration'
 require 'alexa_request_verifier/verifier'
 require 'alexa_request_verifier/version'
 
@@ -14,95 +15,45 @@ module AlexaRequestVerifier
   REQUEST_THRESHOLD = 150 # Requests must be received within X seconds
 
   class << self
-    # Validate a request object from Rack.
-    # Raise an error if it is not valid.
+    attr_reader :verifier
+
+    # Returns our configuration object.
     #
-    # @param [Rack::Request::Env] request a Rack HTTP Request
-    #
-    # @raise [AlexaRequestVerifier::InvalidCertificateURIError]
-    #   there was a problem validating the certificate URI from your request
-    #
-    # @return [nil] will always return nil
-    def valid!(request)
-      signature_certificate_url = request.env['HTTP_SIGNATURECERTCHAINURL']
-
-      AlexaRequestVerifier::Verifier::CertificateURIVerifier.valid!(signature_certificate_url)
-
-      raw_body = request.body.read
-      request.body && request.body.rewind # call the rewind method if it exists (handles Sinatra specifically)
-
-      check_that_request_is_timely(raw_body)
-
-      check_that_request_is_valid(signature_certificate_url, request, raw_body)
-
-      true
+    # @return [AlexaRequestVerifier::Configuration] our configuration object
+    def configuration
+      verifier.configuration
     end
 
-    # Validate a request object from Rack.
-    # Return a boolean.
+    # Sets a new configuration object.
     #
-    # @param [Rack::Request::Env] request a Rack HTTP Request
-    # @return [Boolean] is the request valid?
-    def valid?(request)
-      begin
-        valid!(request)
-      rescue AlexaRequestVerifier::BaseError => e
-        puts e
+    # @param [AlexaRequestVerifier::Configuration] configuration new configuration object
+    # @return [AlexaRequestVerifier::Configuration] configuration object
+    def configuration=(configuration)
+      verifier.configuration = configuration
+    end
 
-        return false
+    # Delegate all methods to the verifier object, essentially making the
+    # module object behave like a {Verifier}.
+    def method_missing(m, *args, &block)
+      if verifier.respond_to?(m)
+        verifier.send(m, *args, &block)
+      else
+        super
       end
+    end
 
-      true
+    # Delegating +respond_to+ to the {Verifier}.
+    def respond_to_missing?(m, include_private = false)
+      verifier.respond_to?(m) || super
     end
 
     private
 
-    # Prevent replays of requests by checking that they are timely.
-    #
-    # @param [String] raw_body the raw body of our https request
-    # @raise [AlexaRequestVerifier::InvalidRequestError] raised when the timestamp is not timely, or is not set
-    def check_that_request_is_timely(raw_body)
-      request_json = JSON.parse(raw_body)
-
-      raise AlexaRequestVerifier::InvalidRequestError, 'Timestamp field not present in request' if request_json.fetch('request', {}).fetch('timestamp', nil).nil?
-
-      raise AlexaRequestVerifier::InvalidRequestError, 'Request is from more than 150 seconds ago' unless Time.parse(request_json['request']['timestamp'].to_s) >= (Time.now - REQUEST_THRESHOLD)
-    end
-
-    # Check that our request is valid.
-    #
-    # @param [String] signature_certificate_url the url for our signing certificate
-    # @param [Rack::Request::Env] request the request object
-    # @param [String] raw_body the raw body of our https request
-    def check_that_request_is_valid(signature_certificate_url, request, raw_body)
-      certificate, chain = AlexaRequestVerifier::CertificateStore.fetch(signature_certificate_url)
-
-      begin
-        AlexaRequestVerifier::Verifier::CertificateVerifier.valid!(certificate, chain)
-
-        check_that_request_was_signed(certificate.public_key, request, raw_body)
-      rescue AlexaRequestVerifier::InvalidCertificateError, AlexaRequestVerifier::InvalidRequestError => error
-        # We don't want to cache a certificate that fails our checks as it could lock us out of valid requests for the cache length
-        AlexaRequestVerifier::CertificateStore.delete(signature_certificate_url)
-
-        raise error
-      end
-    end
-
-    # Check that our request was signed by a given public key.
-    #
-    # @param [OpenSSL::PKey::PKey] certificate_public_key the public key we are checking
-    # @param [Rack::Request::Env] request the request object we are checking
-    # @param [String] raw_body the raw body of our https request
-    # @raise [AlexaRequestVerifier::InvalidRequestError] raised if our signature does not match the certificate provided
-    def check_that_request_was_signed(certificate_public_key, request, raw_body)
-      signed_by_certificate = certificate_public_key.verify(
-        OpenSSL::Digest::SHA1.new,
-        Base64.decode64(request.env['HTTP_SIGNATURE']),
-        raw_body
-      )
-
-      raise AlexaRequestVerifier::InvalidRequestError, 'Signature does not match certificate provided' unless signed_by_certificate
+    # Initialize a new instance of our Verifier to hold global configurations.
+    def initialize_verifier
+      @verifier = AlexaRequestVerifier::Verifier.new
     end
   end
+
+  initialize_verifier
 end

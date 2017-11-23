@@ -1,7 +1,5 @@
 require_relative '../spec_helper'
 
-RSpec.describe AlexaRequestVerifier::Verifier do
-  it 'is a module' do
-    expect(subject).to be_a(Module)
-  end
+RSpec.describe AlexaRequestVerifier::Verifier, vcr: true do
+  it_behaves_like 'a verifier object', AlexaRequestVerifier::Verifier.new
 end
