@@ -1,5 +1,5 @@
 module AlexaRequestVerifier
-  module Verifier
+  class Verifier
     # Given an Alexa certificate URI, validate it according to:
     # https://developer.amazon.com/docs/custom-skills/host-a-custom-skill-as-a-web-service.html#h2_verify_sig_cert
     #

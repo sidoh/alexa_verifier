@@ -21,11 +21,11 @@ http_interactions:
       message: OK
     headers:
       X-Amz-Id-2:
-      - 0S02PR7/3ASGI1cHhE+/KCm/E36gafh8ZNc5ThnNEbxciOyanIn9wnDHLnYq3955dNR/kbT9JY0=
+      - skmBjE651Oor7KeEzRDV5qYLNFfLCb6coKbOkwqQjtWsfVEZs7UWoxfvpyk0ZSgwnGUvBSgPcDs=
       X-Amz-Request-Id:
-      - AE535016A78257EF
+      - 8403C31B889FB3EB
       Date:
-      - Tue, 21 Nov 2017 23:28:04 GMT
+      - Wed, 22 Nov 2017 23:15:56 GMT
       Last-Modified:
       - Thu, 26 Oct 2017 21:36:16 GMT
       Etag:
