@@ -82,7 +82,8 @@ module AlexaRequestVerifier
 
       raise AlexaRequestVerifier::InvalidRequestError, 'Timestamp field not present in request' if request_json.fetch('request', {}).fetch('timestamp', nil).nil?
 
-      raise AlexaRequestVerifier::InvalidRequestError, 'Request is from more than 150 seconds ago' unless Time.parse(request_json['request']['timestamp'].to_s) >= (Time.now - REQUEST_THRESHOLD)
+      request_is_timely = (Time.parse(request_json['request']['timestamp'].to_s) >= (Time.now - REQUEST_THRESHOLD))
+      raise AlexaRequestVerifier::InvalidRequestError, "Request is from more than #{REQUEST_THRESHOLD} seconds ago" unless request_is_timely
     end
 
     # Check that our request is valid.
