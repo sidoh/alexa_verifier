@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email         = ['m@rayner.io']
 
   spec.summary       = 'Verify HTTP requests sent to an Alexa skill are sent from Amazon.'
-  spec.description   = 'This gem is designed to work with Sinatra applications that serve as back-ends for Amazon Alexa skills.'
+  spec.description   = 'This gem is designed to work with Rack applications that serve as back-ends for Amazon Alexa skills.'
   spec.homepage      = 'https://github.com/mattrayner/alexa_request_verifier'
   spec.license       = 'MIT'
 

@@ -14,10 +14,10 @@ module AlexaRequestVerifier
   REQUEST_THRESHOLD = 150 # Requests must be received within X seconds
 
   class << self
-    # Validate a request object from Sinatra.
+    # Validate a request object from Rack.
     # Raise an error if it is not valid.
     #
-    # @param [Sinatra::Request] request a Sinatra HTTP Request
+    # @param [Rack::Request::Env] request a Rack HTTP Request
     #
     # @raise [AlexaRequestVerifier::InvalidCertificateURIError]
     #   there was a problem validating the certificate URI from your request
@@ -29,7 +29,7 @@ module AlexaRequestVerifier
       AlexaRequestVerifier::Verifier::CertificateURIVerifier.valid!(signature_certificate_url)
 
       raw_body = request.body.read
-      request.body.rewind
+      request.body && request.body.rewind # call the rewind method if it exists (handles Sinatra specifically)
 
       check_that_request_is_timely(raw_body)
 
@@ -38,10 +38,10 @@ module AlexaRequestVerifier
       true
     end
 
-    # Validate a request object from Sinatra.
+    # Validate a request object from Rack.
     # Return a boolean.
     #
-    # @param [Sinatra::Request] request a Sinatra HTTP Request
+    # @param [Rack::Request::Env] request a Rack HTTP Request
     # @return [Boolean] is the request valid?
     def valid?(request)
       begin
@@ -72,7 +72,7 @@ module AlexaRequestVerifier
     # Check that our request is valid.
     #
     # @param [String] signature_certificate_url the url for our signing certificate
-    # @param [Sinatra::Request] request the request object
+    # @param [Rack::Request::Env] request the request object
     # @param [String] raw_body the raw body of our https request
     def check_that_request_is_valid(signature_certificate_url, request, raw_body)
       certificate, chain = AlexaRequestVerifier::CertificateStore.fetch(signature_certificate_url)
@@ -92,7 +92,7 @@ module AlexaRequestVerifier
     # Check that our request was signed by a given public key.
     #
     # @param [OpenSSL::PKey::PKey] certificate_public_key the public key we are checking
-    # @param [Sinatra::Request] request the request object we are checking
+    # @param [Rack::Request::Env] request the request object we are checking
     # @param [String] raw_body the raw body of our https request
     # @raise [AlexaRequestVerifier::InvalidRequestError] raised if our signature does not match the certificate provided
     def check_that_request_was_signed(certificate_public_key, request, raw_body)
