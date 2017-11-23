@@ -1,122 +1,59 @@
-require 'net/http'
-require 'openssl'
-require 'base64'
-require 'time'
-require 'json'
+require 'alexa_verifier/certificate_store'
+require 'alexa_verifier/configuration'
+require 'alexa_verifier/verifier'
+require 'alexa_verifier/version'
 
-class AlexaVerifier
-  VERSION = '0.1.0'
+# Errors
+require 'alexa_verifier/base_error'
+require 'alexa_verifier/invalid_certificate_error'
+require 'alexa_verifier/invalid_certificate_u_r_i_error'
+require 'alexa_verifier/invalid_request_error'
 
-  class VerificationError < StandardError; end
+# Verify that HTTP requests sent to an Alexa skill are sent from Amazon
+# @since 0.1.0
+module AlexaVerifier
+  REQUEST_THRESHOLD = 150 # Requests must be received within X seconds
 
-  DEFAULT_TIMESTAMP_TOLERANCE = 150
+  class << self
+    attr_reader :verifier
 
-  VALID_CERT_HOSTNAME = 's3.amazonaws.com'
-  VALID_CERT_PATH_START = '/echo.api/'
-  VALID_CERT_PORT = 443
-
-  class Builder
-    attr_accessor :verify_signatures, :verify_timestamps, :timestamp_tolerance
-
-    def initialize
-      @verify_signatures = true
-      @verify_timestamps = true
-      @timestamp_tolerance = DEFAULT_TIMESTAMP_TOLERANCE
+    # Returns our configuration object.
+    #
+    # @return [AlexaVerifier::Configuration] our configuration object
+    def configuration
+      verifier.configuration
     end
 
-    def create
-      AlexaVerifier.new(verify_signatures, verify_timestamps, timestamp_tolerance)
-    end
-  end
-
-  def self.build(&block)
-    builder = Builder.new
-    block.call(builder)
-    builder.create
-  end
-
-  def initialize(verify_signatures = true, verify_timestamps = true, timestamp_tolerance = DEFAULT_TIMESTAMP_TOLERANCE)
-    @cert_cache = {}
-    @verify_signatures = verify_signatures
-    @verify_timestamps = verify_timestamps
-    @timestamp_tolerance = timestamp_tolerance
-  end
-
-  def verify!(cert_url, signature, request)
-    verify_timestamp!(request) if @verify_timestamps
-
-    if @verify_signatures
-      x509_cert = cert(cert_url)
-      public_key = x509_cert.public_key
-
-      unless public_key.verify(hash_type, Base64.decode64(signature), request)
-        raise VerificationError.new, 'Signature does not match!'
-      end
+    # Sets a new configuration object.
+    #
+    # @param [AlexaVerifier::Configuration] configuration new configuration object
+    # @return [AlexaVerifier::Configuration] configuration object
+    def configuration=(configuration)
+      verifier.configuration = configuration
     end
 
-    true
-  end
-
-  private
-
-    def verify_timestamp!(request)
-      request_json = JSON.parse(request)
-
-      if request_json['request'].nil? or request_json['request']['timestamp'].nil?
-        raise VerificationError.new, 'Timestamp field not present in request'
-      end
-
-      unless Time.parse(request_json['request']['timestamp']) >= (Time.now - @timestamp_tolerance)
-        raise VerificationError.new, "Request is from more than #{@timestamp_tolerance} seconds ago"
-      end
-    end
-
-    def hash_type
-      OpenSSL::Digest::SHA1.new
-    end
-
-    def cert(cert_url)
-      if @cert_cache[cert_url]
-        @cert_cache[cert_url]
+    # Delegate all methods to the verifier object, essentially making the
+    # module object behave like a {Verifier}.
+    def method_missing(m, *args, &block)
+      if verifier.respond_to?(m)
+        verifier.send(m, *args, &block)
       else
-        cert_uri = URI.parse(cert_url)
-        validate_cert_uri!(cert_uri)
-        @cert_cache[cert_url] = OpenSSL::X509::Certificate.new(download_cert(cert_uri))
+        super
       end
     end
 
-    def download_cert(uri)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_PEER
-      http.start
-
-      response = http.request(Net::HTTP::Get.new(uri.request_uri))
-
-      http.finish
-
-      if response.code == '200'
-        response.body
-      else
-        raise VerificationError, "Failed to download certificate at: #{uri}. Response code: #{response.code}, error: #{response.body}"
-      end
+    # Delegating +respond_to+ to the {Verifier}.
+    def respond_to_missing?(m, include_private = false)
+      verifier.respond_to?(m) || super
     end
 
-    def validate_cert_uri!(cert_uri)
-      unless cert_uri.scheme == 'https'
-        raise VerificationError, "Certificate URI MUST be https: #{cert_uri}"
-      end
+    private
 
-      unless cert_uri.port == VALID_CERT_PORT
-        raise VerificationError, "Certificate URI port MUST be #{VALID_CERT_PORT}, was: #{cert_uri.port}"
-      end
-
-      unless cert_uri.host == VALID_CERT_HOSTNAME
-        raise VerificationError, "Certificate URI hostname must be #{VALID_CERT_HOSTNAME}: #{cert_uri}"
-      end
-
-      unless cert_uri.request_uri.start_with?(VALID_CERT_PATH_START)
-        raise VerificationError, "Certificate URI path must start with #{VALID_CERT_PATH_START}: #{cert_uri}"
-      end
+    # Initialize a new instance of our Verifier to hold global configurations.
+    def initialize_verifier
+      @verifier = AlexaVerifier::Verifier.new
     end
+  end
+
+  initialize_verifier
 end
