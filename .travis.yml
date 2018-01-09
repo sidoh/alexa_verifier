@@ -12,3 +12,12 @@ rvm:
 matrix:
   allow_failures:
   - rvm: ruby-head
+
+deploy:
+  provider: rubygems
+  api_key:
+    secure: fFDgkJ+3Uu+OCAg6o9dfw/tb1fePtHavVzkxJyb4V91iTKrzAtzZ/mSgeol7V28OOdVGSQ1sl+rkXIFe4nytDBuw7fdQxYujN+97uzTxyuX8tMUAtUjT3+6FGGCd7T2fNwaOSI50+I3pcQdr//1ZTFOZjK/lM63R2WXGgX2yDDDmgjUNMu15gUGGuVgZCNafVG74tNTGfr5CEUOMCjETq+zjytia5GbhkbE6mXgMCv5J08mv44Ustta9TF0Fj3Sg7C4wmCJtBS8SHOZVptf2NlrJBZr8ac52v+hAxC+6VC2BbhOQH2lRqlgprlWNbPkTIfzhsat4HMAj1Rk11OYnVvxGS5JWnHirlPftJ0ddtKO9z2Mj/Nhbe99GyrcSWbZtFlxLdO93Yc00N0c+TkSrnY8Cq/OabrL+HqxQnrZdMb7ZOG50nwdnRQnF3RVMTl1d1dpgawA1SrGfkEacNB+4iZ0jHj8nKOBQdaUYTYikL77WUvFdShzfZf5cRAVQTj7xyMd5pJWiTxtIeRzQgTmWFeRaVLAsvRRUoPA0npbs6J2huI34uEDWRiXwYXX7/aWkL19G69eOdSh1/19m0GsneUzeuK03VJ8H0GsG6hp+o7BpxnubkWvopldg5HGbCIWaklNoP/tMSAOKNUXVDFFnXcyLB2rlX1Y5Yt5GXSuEONY=
+  gem: alexa_verifier
+  on:
+    tags: true
+    repo: sidoh/alexa_verifier
