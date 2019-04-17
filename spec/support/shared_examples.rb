@@ -40,7 +40,7 @@ end
 RSpec.shared_examples 'a verifier object' do |subject|
   # Setup requests for testing
   before :each do
-    Timecop.freeze(Time.local(2017,11,20,8,45,05))
+    Timecop.freeze(Time.utc(2017,11,20,8,45,05))
   end
 
   after :each do
@@ -54,6 +54,9 @@ RSpec.shared_examples 'a verifier object' do |subject|
   let(:invalid_env) { { "HTTP_SIGNATURECERTCHAINURL" => 'http://bad.example', "HTTP_SIGNATURE" => 'invalid' } }
   let(:invalid_body) { StringIO.new('"{ "invalid": true }"') }
   let(:invalid_request) { double(:request, env: invalid_env, body: invalid_body) }
+  
+  let(:missing_signature_env) { { "HTTP_SIGNATURECERTCHAINURL" => 'https://s3.amazonaws.com/echo.api/echo-api-cert-5.pem', "HTTP_SIGNATURE" => nil } }
+  let(:missing_signature_request) { double(:request, env: missing_signature_env, body: valid_body) }
 
   describe '#valid!' do
     context 'with a valid, timely, request' do
@@ -79,6 +82,14 @@ RSpec.shared_examples 'a verifier object' do |subject|
 
         expect(AlexaVerifier::CertificateStore.store[valid_env["HTTP_SIGNATURECERTCHAINURL"]]).to be_nil
       end
+      
+      context 'with an missing signature' do
+        it 'raises an error' do
+          expect{
+            subject.valid!(missing_signature_request)
+          }.to raise_error(AlexaVerifier::InvalidRequestError, 'Signature does not match certificate provided')
+        end
+      end
     end
   end
 
@@ -94,6 +105,13 @@ RSpec.shared_examples 'a verifier object' do |subject|
         expect(subject.valid?(invalid_request)).to eq(false)
       end
     end
+    
+    context 'with an missing signature' do
+      it 'returns false' do
+        expect(subject.valid?(missing_signature_request)).to eq(false)
+      end
+    end
+    
   end
 
   describe '#configure' do

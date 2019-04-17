@@ -117,7 +117,7 @@ module AlexaVerifier
         OpenSSL::Digest::SHA1.new,
         Base64.decode64(request.env['HTTP_SIGNATURE']),
         raw_body
-      )
+      ) if !request.env['HTTP_SIGNATURE'].nil? && !request.env['HTTP_SIGNATURE'].empty?
 
       raise AlexaVerifier::InvalidRequestError, 'Signature does not match certificate provided' unless signed_by_certificate
     end
