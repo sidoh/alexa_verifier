@@ -113,6 +113,8 @@ module AlexaVerifier
     # @param [String] raw_body the raw body of our https request
     # @raise [AlexaVerifier::InvalidRequestError] raised if our signature does not match the certificate provided
     def check_that_request_was_signed(certificate_public_key, request, raw_body)
+      raise AlexaVerifier::InvalidRequestError, 'HTTP_SIGNATURE header is required, but was not present' unless !request.env['HTTP_SIGNATURE'].nil? && !request.env['HTTP_SIGNATURE'].empty?
+      
       signed_by_certificate = certificate_public_key.verify(
         OpenSSL::Digest::SHA1.new,
         Base64.decode64(request.env['HTTP_SIGNATURE']),
